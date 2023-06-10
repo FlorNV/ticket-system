@@ -43,7 +43,7 @@ export const getUser = async (req: Request, res: Response) => {
     }
 }
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (req: Request<{}, {}, UserBody>, res: Response) => {
     const { firstname, lastname } = req.body
     
     try {
@@ -77,7 +77,7 @@ export const updateUser = async (req: Request, res: Response) => {
             message: 'User not found'                
         })
 
-        const userUpdated = await User.update({ id: parseInt(id) }, data)
+        await User.update({ id: parseInt(id) }, data)
         return res.sendStatus(204)
     } catch (error) {
         if(error instanceof Error) {
