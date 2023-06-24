@@ -13,10 +13,10 @@ export class User extends BaseEntity {
     id: number
     
     @Column()
-    firstname: string
+    email: string
 
     @Column()
-    lastname: string
+    password: string
 
     @Column({ default: true })
     active: boolean

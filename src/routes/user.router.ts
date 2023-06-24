@@ -1,10 +1,11 @@
 import { Router } from 'express'
+import passport from 'passport'
 import { 
     createUser, 
     deleteUser, 
     getUser, 
     getUsers, 
-    updateUser 
+    updateUser, signIn, signUp, protectedEndpoint, refresh
 } from '../controllers/user.controller'
 
 const router = Router()
@@ -15,4 +16,12 @@ router.post('/', createUser)
 router.put('/:id', updateUser)
 router.delete('/:id', deleteUser)
 
-export default router
+//Agregar para jwt
+router.post('/signup', signUp);
+router.post('/signin', signIn);
+router.post('/token', refresh);
+router.post('/protected', 
+passport.authenticate('jwt', { session: false }), 
+protectedEndpoint);
+
+export default router;
