@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm'
-import { User, Event } from './entities/index'
+import { User, Event, Profile, Photo } from './entities/index'
 
 export const AppDataSource = new DataSource({
     type: 'mysql',
@@ -10,5 +10,5 @@ export const AppDataSource = new DataSource({
     database: 'ticket-system-db',
     // logging: true,
     synchronize: true,
-    entities: [User, Event]
+    entities: [User, Profile, Photo, Event]
 })

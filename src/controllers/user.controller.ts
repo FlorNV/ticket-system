@@ -4,6 +4,8 @@ import { User } from '../entities/User'
 // -------- Agregar para jwt
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Profile } from "../entities/Profile";
+import { Photo } from "../entities";
 const jwtSecret = 'somesecrettoken';
 const jwtRefreshTokenSecret = 'somesecrettokenrefresh';
 let refreshTokens: (string | undefined)[] = [];
@@ -29,7 +31,13 @@ interface UserBody {
 
 export const getUsers = async (req: Request, res: Response) => {
     try {
-        const users = await User.find()
+        // const users = await User.find()
+        const users = await User.find({
+          relations: {
+            profile: true,
+            photos: true
+          }
+        })
         return res.status(200).json({
             data: users
         })
@@ -46,7 +54,13 @@ export const getUser = async (req: Request, res: Response) => {
     const { id } = req.params
     
     try {
-        const user = await User.findOneBy({ id: parseInt(id) })
+        // const user = await User.findOneBy({ 
+        //   id: parseInt(id) 
+        // })
+        const user = await User.findOne({ 
+          where: { id: parseInt(id) },
+          relations: ['profile', 'photos'] 
+        })
 
         if(!user) return res.status(404).json({
             message: 'User not found'
@@ -64,13 +78,31 @@ export const getUser = async (req: Request, res: Response) => {
     }
 }
 
-export const createUser = async (req: Request<{}, {}, UserBody>, res: Response) => {
-    const { firstname, lastname } = req.body
+export const createUser = async (req: Request, res: Response) => {
+    const { email, password, profile, photos } = req.body
     
     try {
+        const arrayPhotos: Photo[] = [];
+
+        for (let index = 0; index < photos.length; index++) {
+          const element = photos[index];
+          const photoElement = new Photo();
+          photoElement.url = element.url;
+          await photoElement.save();
+          arrayPhotos.push(photoElement);
+        }
+
+        const profileUser = new Profile();
+        profileUser.gender = profile.gender;
+        profileUser.photo = profile.photo;
+
+        await profileUser.save()
+
         const user = new User()
-        user.email = firstname
-        user.password = lastname
+        user.email = email
+        user.password = password
+        user.profile = profileUser
+        user.photos = arrayPhotos
         
         await user.save()
 
@@ -130,21 +162,31 @@ export const deleteUser = async (req: Request, res: Response) => {
 }
 
 export const signUp = async (req: Request, res: Response ): Promise<Response> => {
-    if (!req.body.email || !req.body.password) {
+  const { email, password, profile } = req.body
+
+    if (!email || !password) {
       return res
         .status(400)
         .json({ msg: "Please. Send your email and password" });
     }
   
-    const user = await User.findOneBy({ email: req.body.email });
+    const user = await User.findOneBy({ email });
     if (user) {
       return res.status(400).json({ msg: "The User already Exists" });
     }
   
+    // Se crea un nuevo perfil para el usuario
+    const profileUser = new Profile();
+    profileUser.gender = profile.gender;
+    profileUser.photo = profile.photo;
+    await profileUser.save();
   
     const newUser = new User();
-    newUser.email = req.body.email;
-    newUser.password = await createHash(req.body.password);
+    newUser.email = email;
+    newUser.password = await createHash(password);
+
+    // Se agrega el perfil del usuario
+    newUser.profile = profileUser;
     await newUser.save();
     return res.status(201).json(newUser);
 }
